@@ -42,10 +42,35 @@
 // }
 
 
+// async function callGroqAI(messagesArray, isJsonResponse = false) {
+//   const response = await fetch("/api/chat", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({
+//       messages: messagesArray,
+//       isJsonResponse,
+//     }),
+//   });
+
+//   const data = await response.json().catch(() => ({}));
+
+//   if (!response.ok) {
+//     throw new Error(data.error || `API gặp lỗi HTTP ${response.status}.`);
+//   }
+
+//   if (!data.content) {
+//     throw new Error("Không nhận được phản hồi từ Groq.");
+//   }
+
+//   return data.content;
+// }
+
 async function callGroqAI(messagesArray, isJsonResponse = false) {
   const response = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       messages: messagesArray,
       isJsonResponse,
@@ -55,7 +80,7 @@ async function callGroqAI(messagesArray, isJsonResponse = false) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || `API gặp lỗi HTTP ${response.status}.`);
+    throw new Error(data.error || `Lỗi máy chủ HTTP ${response.status}.`);
   }
 
   if (!data.content) {
@@ -64,8 +89,6 @@ async function callGroqAI(messagesArray, isJsonResponse = false) {
 
   return data.content;
 }
-
-
 // Làm sạch nội dung JSON do AI trả về rồi chuyển thành object JavaScript.
 function cleanAndParseJSON(rawContent) {
     let cleaned = String(rawContent || "").trim();
