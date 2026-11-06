@@ -1,62 +1,20 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Chỉ hỗ trợ POST." });
-  }
+const express = require("express");
+const path = require("path");
+const chatRouter = require("./api/chat");
 
-  const { messages, isJsonResponse } = req.body || {};
+const app = express();
 
-  if (
-    !Array.isArray(messages) ||
-    messages.length === 0 ||
-    messages.length > 20 ||
-    messages.some(
-      (m) =>
-        !["system", "user", "assistant"].includes(m?.role) ||
-        typeof m?.content !== "string" ||
-        m.content.length > 12000
-    )
-  ) {
-    return res.status(400).json({ error: "Dữ liệu yêu cầu không hợp lệ." });
-  }
+app.use(express.json({ limit: "100kb" }));
 
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: "Chưa cấu hình GROQ_API_KEY." });
-  }
+// API: POST /api/chat
+app.use("/api/chat", chatRouter);
 
-  try {
-    const upstream = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          messages,
-          temperature: 0.7,
-          max_completion_tokens: 2048,
-          ...(isJsonResponse
-            ? { response_format: { type: "json_object" } }
-            : {}),
-        }),
-      }
-    );
+// Phục vụ index.html, config.js, js/, ...
+app.use(express.static(__dirname));
 
-    const data = await upstream.json().catch(() => ({}));
+// Render cấp cổng qua biến PORT
+const port = process.env.PORT || 10000;
 
-    if (!upstream.ok) {
-      return res.status(upstream.status).json({
-        error: data.error?.message || "Groq API gặp lỗi.",
-      });
-    }
-
-    return res.status(200).json({
-      content: data.choices?.[0]?.message?.content || "",
-    });
-  } catch {
-    return res.status(502).json({ error: "Không kết nối được Groq API." });
-  }
-}
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server đang chạy tại cổng ${port}`);
+});
